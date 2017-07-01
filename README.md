@@ -10,7 +10,7 @@ Add this to your application's `shard.yml`:
 ```yaml
 dependencies:
   crystalforce:
-    github: ucmsky/crystalforce
+    github: ucdmsky/crystalforce
 ```
 
 
@@ -99,7 +99,7 @@ client.destroy('Account', '0016000000MRatd')
 
 ## Contributing
 
-1. Fork it ( https://github.com/ucmsky/crystalforce/fork )
+1. Fork it ( https://github.com/ucdmsky/crystalforce/fork )
 2. Create your feature branch (git checkout -b my-new-feature)
 3. Commit your changes (git commit -am 'Add some feature')
 4. Push to the branch (git push origin my-new-feature)
@@ -107,4 +107,4 @@ client.destroy('Account', '0016000000MRatd')
 
 ## Contributors
 
-- [ucmsky](https://github.com/ucmsky) ucmsky - creator, maintainer
+- [ucdmsky](https://github.com/ucdmsky) - creator, maintainer
