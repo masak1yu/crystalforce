@@ -2,7 +2,7 @@ module Crystalforce
   class Client
     include Crystalforce::Api
 
-    def initialize(args : Hash)
+    def initialize(args : Hash(Symbol, String))
       @api_version = ""
       @access_token = ""
       @instance_url = ""
