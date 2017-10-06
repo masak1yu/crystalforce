@@ -1,6 +1,6 @@
 # crystalforce
 
-Crystalforce is a crystal shartds for the Salesforce REST api.
+Crystalforce is a crystal shards for the Salesforce REST api.
 
 ## Installation
 
@@ -10,7 +10,7 @@ Add this to your application's `shard.yml`:
 ```yaml
 dependencies:
   crystalforce:
-    github: ucdmsky/crystalforce
+    github: msky026/crystalforce
 ```
 
 
@@ -41,7 +41,7 @@ You can connect to sandbox orgs by specifying a host. The default host is
 'login.salesforce.com':
 
 ```crystal
-client = Crystalforce.new(:host => 'test.salesforce.com')
+client = Crystalforce.new({:host => 'test.salesforce.com'})
 ```
 
 ### API versions
@@ -54,7 +54,7 @@ Restforce will raise an `APIVersionError`.
 You can change the `api_version` setting from the default either on a per-client basis:
 
 ```crystal
-client = Crystalforce.new api_version: "36.0" # ...
+client = Crystalforce.new({api_version: "36.0" # ...})
 ```
 
 ### query
@@ -99,7 +99,7 @@ client.destroy('Account', '0016000000MRatd')
 
 ## Contributing
 
-1. Fork it ( https://github.com/ucdmsky/crystalforce/fork )
+1. Fork it ( https://github.com/msky026/crystalforce/fork )
 2. Create your feature branch (git checkout -b my-new-feature)
 3. Commit your changes (git commit -am 'Add some feature')
 4. Push to the branch (git push origin my-new-feature)
@@ -107,4 +107,4 @@ client.destroy('Account', '0016000000MRatd')
 
 ## Contributors
 
-- [ucdmsky](https://github.com/ucdmsky) - creator, maintainer
+- [msky](https://github.com/msky026) - creator, maintainer
