@@ -97,6 +97,14 @@ client.destroy('Account', '0016000000MRatd')
 # => true
 ```
 
+## notice
+
+If you are using TLS 1.0 or earlier version of the library, update the ssl library to the latest one and use the following option.
+
+```
+crystal run --link-flags "-L/path/to/openssl/lib/" <file>
+```
+
 ## Contributing
 
 1. Fork it ( https://github.com/msky026/crystalforce/fork )
