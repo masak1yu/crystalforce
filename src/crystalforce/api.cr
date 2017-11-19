@@ -1,4 +1,5 @@
 require "json"
+require "uri"
 
 module Crystalforce
   module Api
@@ -41,6 +42,16 @@ module Crystalforce
 
     def update(sobject, id, attrs)
       HTTP::Client.patch "#{api_path}/sobjects/#{sobject}/#{id}", HTTP::Headers{"Authorization" => "Bearer #{@access_token}", "Content-Type" => "application/json"}, attrs.to_json
+    end
+
+    def upsert(sobject, field, attrs)
+      external_id = attrs.fetch(attrs.keys.find { |k| k.to_s.downcase == field.to_s.downcase }, nil)
+      attrs_without_field = attrs.reject { |k, v| k.to_s.downcase == field.to_s.downcase }
+      response =
+        HTTP::Client.patch "#{api_path}/sobjects/#{sobject}/#{field}/#{URI.escape(external_id.not_nil!.to_s)}",
+        HTTP::Headers{"Authorization" => "Bearer #{@access_token}", "Content-Type" => "application/json"},
+        attrs_without_field.to_json
+      (response.body && response.body["id"]) ? response.body["id"] : true
     end
 
     def destroy(sobject, id)
