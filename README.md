@@ -77,7 +77,7 @@ query_all allows you to include results from your query that Salesforce hides in
 
 ```crystal
 # Add a new account
-client.create('Account', {:Name => 'Foobar Inc.'})
+client.create("Account", {:Name => "Foobar Inc.""})
 # => '0016000000MRatd'
 ```
 
@@ -85,15 +85,23 @@ client.create('Account', {:Name => 'Foobar Inc.'})
 
 ```crystal
 # Update the Account with `Id` '0016000000MRatd'
-client.update('Account', '0016000000MRatd', {:Name => 'Whizbang Corp'})
+client.update("Account", "0016000000MRatd", {:Name => "Whizbang Corp"})
 # => true
+```
+
+### upsert
+
+```crystal
+# Update the record with external `External__c` external ID set to '12'
+client.upsert("Account", "External__c", "External__c" => 12, "Name" => "Foobar")
+# => response.body["id"] or true
 ```
 
 ### destroy
 
 ```crystal
 # Delete the Account with `Id` '0016000000MRatd'
-client.destroy('Account', '0016000000MRatd')
+client.destroy("Account", "0016000000MRatd")
 # => true
 ```
 
