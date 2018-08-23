@@ -7,12 +7,12 @@ module Crystalforce
     def self.authenticate(options)
       context = OpenSSL::SSL::Context::Client.new
       if username_password?(options)
-        HTTP::Client.post_form "https://#{options[:host]}/services/oauth2/token",
-          "grant_type=password&client_id=#{options[:client_id]}&client_secret=#{options[:client_secret]}&username=#{options[:username]}&password=#{options[:password]}",
+        HTTP::Client.post "https://#{options[:host]}/services/oauth2/token",
+          form: "grant_type=password&client_id=#{options[:client_id]}&client_secret=#{options[:client_secret]}&username=#{options[:username]}&password=#{options[:password]}",
           tls: context
       elsif oauth_refresh?(options)
-        HTTP::Client.post_form "https://#{options[:host]}/services/oauth2/token",
-          "grant_type=refresh_token&refresh_token=#{options[:refresh_token]}&client_id=#{options[:client_id]}&client_secret=#{options[:client_secret]}",
+        HTTP::Client.post "https://#{options[:host]}/services/oauth2/token",
+          form: "grant_type=refresh_token&refresh_token=#{options[:refresh_token]}&client_id=#{options[:client_id]}&client_secret=#{options[:client_secret]}",
           tls: context
       end
     end
