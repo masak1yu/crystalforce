@@ -4,7 +4,7 @@ require "uri"
 module Crystalforce
   module Api
     def query(soql)
-      query_str = URI.escape(soql)
+      query_str = URI.encode_www_form(soql)
       response = HTTP::Client.get "#{api_path}/query/?q=#{query_str}",
         HTTP::Headers{"Authorization" => "Bearer #{@access_token}"}
       if response && response.status_code != 200
@@ -15,7 +15,7 @@ module Crystalforce
     end
 
     def query_all(soql)
-      query_str = URI.escape(soql)
+      query_str = URI.encode_www_form(soql)
       response = HTTP::Client.get "#{api_path}/queryAll/?q=#{query_str}",
         HTTP::Headers{"Authorization" => "Bearer #{@access_token}"}
       if response && response.status_code != 200
@@ -25,10 +25,8 @@ module Crystalforce
       result["records"]
     end
 
-    # FIXME
     def search(sosl)
-      query_str = URI.escape(sosl)
-      p query_str
+      query_str = URI.encode_www_form(sosl)
       response = HTTP::Client.get "#{api_path}/search/?q=#{query_str}", HTTP::Headers{"Authorization" => "Bearer #{@access_token}"}
       if response && response.status_code != 200
         raise ServerError.new "Cannot connect salesforce"
@@ -48,7 +46,7 @@ module Crystalforce
       external_id = attrs.fetch(attrs.keys.find { |k| k.to_s.downcase == field.to_s.downcase }, nil)
       attrs_without_field = attrs.reject { |k, v| k.to_s.downcase == field.to_s.downcase }
       response =
-        HTTP::Client.patch "#{api_path}/sobjects/#{sobject}/#{field}/#{URI.escape(external_id.not_nil!.to_s)}",
+        HTTP::Client.patch "#{api_path}/sobjects/#{sobject}/#{field}/#{URI.encode_www_form(external_id.not_nil!.to_s)}",
         HTTP::Headers{"Authorization" => "Bearer #{@access_token}", "Content-Type" => "application/json"},
         attrs_without_field.to_json
       (response.body && response.body["id"]) ? response.body["id"] : true

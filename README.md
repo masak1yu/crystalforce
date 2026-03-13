@@ -10,7 +10,7 @@ Add this to your application's `shard.yml`:
 ```yaml
 dependencies:
   crystalforce:
-    github: msky026/crystalforce
+    github: masak1yu/crystalforce
 ```
 
 

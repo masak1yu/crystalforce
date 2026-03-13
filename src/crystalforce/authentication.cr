@@ -1,37 +1,23 @@
 require "http/client"
-require "openssl"
 
 module Crystalforce
   class Authentication
-    # Public: Force an authentication
-    def self.authenticate(options)
-      context = OpenSSL::SSL::Context::Client.new
-      if username_password?(options)
-        HTTP::Client.post "https://#{options[:host]}/services/oauth2/token",
-          form: "grant_type=password&client_id=#{options[:client_id]}&client_secret=#{options[:client_secret]}&username=#{options[:username]}&password=#{options[:password]}",
-          tls: context
-      elsif oauth_refresh?(options)
-        HTTP::Client.post "https://#{options[:host]}/services/oauth2/token",
-          form: "grant_type=refresh_token&refresh_token=#{options[:refresh_token]}&client_id=#{options[:client_id]}&client_secret=#{options[:client_secret]}",
-          tls: context
+    def self.authenticate(
+      username : String? = nil,
+      password : String? = nil,
+      security_token : String? = nil,
+      client_id : String? = nil,
+      client_secret : String? = nil,
+      refresh_token : String? = nil,
+      host : String = "login.salesforce.com"
+    )
+      if username && password && client_id && client_secret
+        HTTP::Client.post "https://#{host}/services/oauth2/token",
+          form: "grant_type=password&client_id=#{client_id}&client_secret=#{client_secret}&username=#{username}&password=#{password}"
+      elsif refresh_token && client_id && client_secret
+        HTTP::Client.post "https://#{host}/services/oauth2/token",
+          form: "grant_type=refresh_token&refresh_token=#{refresh_token}&client_id=#{client_id}&client_secret=#{client_secret}"
       end
-    end
-
-    # Internal: Returns true if username/password (autonomous) flow should be used for
-    # authentication.
-    def self.username_password?(options)
-      options[:username]? &&
-        options[:password]? &&
-        options[:client_id]? &&
-        options[:client_secret]?
-    end
-
-    # Internal: Returns true if oauth token refresh flow should be used for
-    # authentication.
-    def self.oauth_refresh?(options)
-      options[:refresh_token]? &&
-        options[:client_id]? &&
-        options[:client_secret]?
     end
   end
 end
