@@ -2,6 +2,12 @@ name: crystalforce
 version: 0.1.0
 
 authors:
-  - ucdmsky <antilogic@outlook.com>
+  - masak1yu <antilogic@outlook.com>
+
+crystal: ">= 1.0.0"
+
+targets:
+  crystalforce:
+    main: src/crystalforce.cr
 
 license: MIT
