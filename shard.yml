@@ -4,4 +4,10 @@ version: 0.1.0
 authors:
   - masak1yu <antilogic@outlook.com>
 
+crystal: ">= 1.0.0"
+
+targets:
+  crystalforce:
+    main: src/crystalforce.cr
+
 license: MIT

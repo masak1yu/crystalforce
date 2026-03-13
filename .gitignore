@@ -1,4 +1,7 @@
+/bin/
+/crystalforce
 /doc/
+*.dwarf
 /libs/
 /.crystal/
 /.shards/
