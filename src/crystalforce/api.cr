@@ -1,5 +1,7 @@
 require "json"
 require "uri"
+require "compress/gzip"
+require "openssl"
 
 module Crystalforce
   module Api
@@ -8,43 +10,61 @@ module Crystalforce
     def api_get(path, params = nil)
       url = "#{api_path}#{path}"
       url += "?#{URI::Params.encode(params)}" if params
-      response = with_retry do
-        HTTP::Client.get url, headers: auth_headers
+
+      # Cache check
+      if @cache
+        cached = @cache.not_nil!.read(url)
+        if cached
+          Crystalforce::Log.debug { "Cache hit: #{url}" }
+          return HTTP::Client::Response.new(200, cached)
+        end
       end
+
+      Crystalforce::Log.debug { "GET #{url}" }
+      response = with_retry do
+        do_request(:get, url)
+      end
+
+      # Cache write on success
+      if @cache && response.status_code >= 200 && response.status_code < 300
+        @cache.not_nil!.write(url, response.body)
+      end
+
       response
     end
 
     def api_post(path, body = nil)
       json_body = body ? (body.is_a?(String) ? body : body.to_json) : nil
+      url = "#{api_path}#{path}"
+      Crystalforce::Log.debug { "POST #{url}" }
       with_retry do
-        HTTP::Client.post "#{api_path}#{path}",
-          headers: auth_headers_with_json,
-          body: json_body
+        do_request(:post, url, json_body)
       end
     end
 
     def api_patch(path, body = nil)
       json_body = body ? (body.is_a?(String) ? body : body.to_json) : nil
+      url = "#{api_path}#{path}"
+      Crystalforce::Log.debug { "PATCH #{url}" }
       with_retry do
-        HTTP::Client.patch "#{api_path}#{path}",
-          headers: auth_headers_with_json,
-          body: json_body
+        do_request(:patch, url, json_body)
       end
     end
 
     def api_put(path, body = nil)
       json_body = body ? (body.is_a?(String) ? body : body.to_json) : nil
+      url = "#{api_path}#{path}"
+      Crystalforce::Log.debug { "PUT #{url}" }
       with_retry do
-        HTTP::Client.put "#{api_path}#{path}",
-          headers: auth_headers_with_json,
-          body: json_body
+        do_request(:put, url, json_body)
       end
     end
 
     def api_delete(path)
+      url = "#{api_path}#{path}"
+      Crystalforce::Log.debug { "DELETE #{url}" }
       with_retry do
-        HTTP::Client.delete "#{api_path}#{path}",
-          headers: auth_headers
+        do_request(:delete, url)
       end
     end
 
@@ -55,6 +75,20 @@ module Crystalforce
       raise_on_error(response)
       result = JSON.parse(response.body)
       result["records"]
+    end
+
+    # Query returning a Collection with automatic pagination
+    def query_with_pagination(soql) : Collection
+      response = api_get("/query/", {"q" => soql})
+      raise_on_error(response)
+      result = JSON.parse(response.body)
+      Collection.new(
+        records: result["records"].as_a,
+        total_size: result["totalSize"].as_i64,
+        done: result["done"].as_bool,
+        next_records_url: result["nextRecordsUrl"]?.try(&.as_s),
+        client: self
+      )
     end
 
     def query_all(soql)
@@ -101,13 +135,23 @@ module Crystalforce
     end
 
     def create(sobject, attrs)
-      response = api_post("/sobjects/#{sobject}/", attrs)
-      response
+      api_post("/sobjects/#{sobject}/", attrs)
+    end
+
+    def create!(sobject, attrs)
+      response = create(sobject, attrs)
+      raise_on_error(response)
+      JSON.parse(response.body)
     end
 
     def update(sobject, id, attrs)
-      response = api_patch("/sobjects/#{sobject}/#{id}", attrs)
-      response
+      api_patch("/sobjects/#{sobject}/#{id}", attrs)
+    end
+
+    def update!(sobject, id, attrs)
+      response = update(sobject, id, attrs)
+      raise_on_error(response)
+      true
     end
 
     def upsert(sobject, field, attrs)
@@ -125,8 +169,30 @@ module Crystalforce
       end
     end
 
+    def upsert!(sobject, field, attrs)
+      external_id = attrs.fetch(attrs.keys.find { |k| k.to_s.downcase == field.to_s.downcase }, nil)
+      attrs_without_field = attrs.reject { |k, v| k.to_s.downcase == field.to_s.downcase }
+      response = api_patch(
+        "/sobjects/#{sobject}/#{field}/#{URI.encode_path(external_id.not_nil!.to_s)}",
+        attrs_without_field
+      )
+      raise_on_error(response)
+      if response.body.empty?
+        true
+      else
+        parsed = JSON.parse(response.body)
+        parsed["id"]? || true
+      end
+    end
+
     def destroy(sobject, id)
       api_delete("/sobjects/#{sobject}/#{id}")
+    end
+
+    def destroy!(sobject, id)
+      response = destroy(sobject, id)
+      raise_on_error(response)
+      true
     end
 
     # Describe / Metadata
@@ -168,8 +234,7 @@ module Crystalforce
 
     def user_info
       response = with_retry do
-        HTTP::Client.get "#{@instance_url}/services/oauth2/userinfo",
-          headers: auth_headers
+        do_request(:get, "#{@instance_url}/services/oauth2/userinfo")
       end
       raise_on_error(response)
       JSON.parse(response.body)
@@ -222,7 +287,6 @@ module Crystalforce
       picklist_entries = target_field["picklistValues"].as_a
 
       if valid_for
-        # Dependent picklist filtering
         unless target_field["dependentPicklist"]?.try(&.as_bool)
           raise ServerError.new("'#{field}' is not a dependent picklist")
         end
@@ -258,7 +322,7 @@ module Crystalforce
       results = [] of JSON::Any
       subrequests.each_chunk(25) do |chunk|
         body = {
-          "haltOnError"  => halt_on_error,
+          "haltOnError"   => halt_on_error,
           "batchRequests" => chunk,
         }
         response = api_post("/composite/batch", body)
@@ -300,12 +364,111 @@ module Crystalforce
       "#{@instance_url}/services/data/v#{@api_version}"
     end
 
+    private def build_headers(with_json : Bool = false) : HTTP::Headers
+      headers = HTTP::Headers.new
+      headers["Authorization"] = "Bearer #{@access_token}"
+      headers["Content-Type"] = "application/json" if with_json
+      if @compress
+        headers["Accept-Encoding"] = "gzip"
+        headers["Content-Encoding"] = "gzip" if with_json
+      end
+      if rh = @request_headers
+        rh.each { |k, v| headers[k] = v }
+      end
+      headers
+    end
+
     private def auth_headers
-      HTTP::Headers{"Authorization" => "Bearer #{@access_token}"}
+      build_headers
     end
 
     private def auth_headers_with_json
-      HTTP::Headers{"Authorization" => "Bearer #{@access_token}", "Content-Type" => "application/json"}
+      build_headers(with_json: true)
+    end
+
+    private def do_request(method : Symbol, url : String, body : String? = nil) : HTTP::Client::Response
+      uri = URI.parse(url)
+      client = build_http_client(uri)
+      headers = body ? auth_headers_with_json : auth_headers
+
+      request_body = body
+      if @compress && body
+        io = IO::Memory.new
+        Compress::Gzip::Writer.open(io) { |gz| gz.print(body) }
+        request_body = io.to_s
+      end
+
+      Crystalforce::Log.debug { "#{method.to_s.upcase} #{url}" }
+
+      response = case method
+                 when :get
+                   client.get(uri.request_target, headers: headers)
+                 when :post
+                   client.post(uri.request_target, headers: headers, body: request_body)
+                 when :patch
+                   client.patch(uri.request_target, headers: headers, body: request_body)
+                 when :put
+                   client.put(uri.request_target, headers: headers, body: request_body)
+                 when :delete
+                   client.delete(uri.request_target, headers: headers)
+                 else
+                   raise "Unknown HTTP method: #{method}"
+                 end
+
+      response = handle_redirect(response, method, body) if response.status_code.in?(301, 302, 303, 307, 308)
+      response = decompress(response) if @compress
+
+      Crystalforce::Log.debug { "Response: #{response.status_code}" }
+      response
+    end
+
+    private def build_http_client(uri : URI) : HTTP::Client
+      if proxy_str = @proxy_uri
+        proxy_uri = URI.parse(proxy_str)
+        client = HTTP::Client.new(uri, tls: @ssl)
+        # Crystal's HTTP::Client doesn't have built-in proxy support via constructor,
+        # but we can set it up if the proxy is available
+        client
+      else
+        HTTP::Client.new(uri, tls: @ssl)
+      end
+    end
+
+    private def handle_redirect(response : HTTP::Client::Response, method : Symbol, body : String?, max_redirects : Int32 = 5) : HTTP::Client::Response
+      redirects = 0
+      while response.status_code.in?(301, 302, 303, 307, 308) && redirects < max_redirects
+        location = response.headers["Location"]?
+        break unless location
+        Crystalforce::Log.debug { "Following redirect to #{location}" }
+        uri = URI.parse(location)
+        client = build_http_client(uri)
+        headers = auth_headers
+        # 303 always becomes GET, 301/302 typically become GET for non-GET
+        if response.status_code.in?(301, 302, 303)
+          response = client.get(uri.request_target, headers: headers)
+        else
+          response = case method
+                     when :get    then client.get(uri.request_target, headers: headers)
+                     when :post   then client.post(uri.request_target, headers: auth_headers_with_json, body: body)
+                     when :patch  then client.patch(uri.request_target, headers: auth_headers_with_json, body: body)
+                     when :put    then client.put(uri.request_target, headers: auth_headers_with_json, body: body)
+                     when :delete then client.delete(uri.request_target, headers: headers)
+                     else              client.get(uri.request_target, headers: headers)
+                     end
+        end
+        redirects += 1
+      end
+      response
+    end
+
+    private def decompress(response : HTTP::Client::Response) : HTTP::Client::Response
+      if response.headers["Content-Encoding"]? == "gzip" && !response.body.empty?
+        io = IO::Memory.new(response.body)
+        decompressed = Compress::Gzip::Reader.open(io) { |gz| gz.gets_to_end }
+        HTTP::Client::Response.new(response.status_code, decompressed, response.headers)
+      else
+        response
+      end
     end
 
     private def raise_on_error(response)
@@ -318,11 +481,16 @@ module Crystalforce
                  else
                    "Salesforce API error (#{response.status_code})"
                  end
+      Crystalforce::Log.error { "API error #{response.status_code}: #{message}" }
       case response.status_code
+      when 300
+        raise ServerError.new("Multiple records found: #{message}")
       when 401
         raise UnauthorizedError.new(message)
       when 404
-        raise ServerError.new(message)
+        raise NotFoundError.new(message)
+      when 413
+        raise ServerError.new("Request too large: #{message}")
       else
         raise ServerError.new(message)
       end
