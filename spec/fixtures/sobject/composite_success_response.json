@@ -1,0 +1,16 @@
+{
+  "compositeResponse": [
+    {
+      "body": {"id": "001xx000003DGbYAAW", "success": true, "errors": []},
+      "httpHeaders": {},
+      "httpStatusCode": 201,
+      "referenceId": "ref1"
+    },
+    {
+      "body": null,
+      "httpHeaders": {},
+      "httpStatusCode": 204,
+      "referenceId": "ref2"
+    }
+  ]
+}

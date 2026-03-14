@@ -23,7 +23,7 @@ module Crystalforce
       proxy_uri : String? = nil,
       ssl : OpenSSL::SSL::Context::Client? = nil,
       request_headers : Hash(String, String)? = nil,
-      cache : Cache? = nil
+      cache : Cache? = nil,
     )
       # Apply environment variable defaults
       @username = username || Crystalforce.env_username

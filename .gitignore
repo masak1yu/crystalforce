@@ -2,6 +2,7 @@
 /crystalforce
 /doc/
 *.dwarf
+/lib/
 /libs/
 /.crystal/
 /.shards/

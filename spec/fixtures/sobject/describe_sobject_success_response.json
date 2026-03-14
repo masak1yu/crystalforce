@@ -1,0 +1,40 @@
+{
+  "name": "Whizbang",
+  "fields": [
+    {
+      "name": "Id",
+      "type": "id",
+      "label": "Record ID",
+      "picklistValues": []
+    },
+    {
+      "name": "Name",
+      "type": "string",
+      "label": "Name",
+      "picklistValues": []
+    },
+    {
+      "name": "Stage",
+      "type": "picklist",
+      "label": "Stage",
+      "dependentPicklist": false,
+      "picklistValues": [
+        {"value": "Open", "active": true, "label": "Open"},
+        {"value": "Closed", "active": true, "label": "Closed"},
+        {"value": "Pending", "active": true, "label": "Pending"}
+      ]
+    },
+    {
+      "name": "SubStage",
+      "type": "picklist",
+      "label": "Sub Stage",
+      "dependentPicklist": true,
+      "controllerName": "Stage",
+      "picklistValues": [
+        {"value": "Open_Sub1", "active": true, "label": "Open Sub 1", "validFor": "gA=="},
+        {"value": "Open_Sub2", "active": true, "label": "Open Sub 2", "validFor": "gA=="},
+        {"value": "Closed_Sub1", "active": true, "label": "Closed Sub 1", "validFor": "QA=="}
+      ]
+    }
+  ]
+}
