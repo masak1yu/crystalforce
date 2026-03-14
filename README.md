@@ -1,6 +1,7 @@
 # crystalforce
 
 Crystalforce is a Crystal shard for the Salesforce REST API.
+A Crystal port of [Restforce](https://github.com/restforce/restforce).
 
 ## Installation
 
@@ -62,6 +63,29 @@ client = Crystalforce.new(
 )
 ```
 
+#### JWT Bearer authentication
+
+```crystal
+jwt_key = File.read("path/to/private_key.pem")
+client = Crystalforce.new(
+  username:  "foo",
+  client_id: "client_id",
+  jwt_key:   jwt_key,
+)
+```
+
+#### Client Credentials authentication
+
+Requires the `host` to be set to your My Domain URL:
+
+```crystal
+client = Crystalforce.new(
+  client_id:     "client_id",
+  client_secret: "client_secret",
+  host:          "yourdomain.my.salesforce.com",
+)
+```
+
 #### Sandbox Orgs
 
 You can connect to sandbox orgs by specifying a host. The default host is
@@ -69,7 +93,7 @@ You can connect to sandbox orgs by specifying a host. The default host is
 
 ```crystal
 client = Crystalforce.new(
-  host:          "test.salesforce.com",
+  host:           "test.salesforce.com",
   username:       "foo",
   password:       "bar",
   security_token: "security_token",
@@ -78,18 +102,48 @@ client = Crystalforce.new(
 )
 ```
 
-### API versions
+### Options
+
+#### API versions
 
 By default, the shard uses version 34.0 of the Salesforce API.
 You can change the `api_version` on a per-client basis:
 
 ```crystal
 client = Crystalforce.new(
-  api_version: "36.0",
-  username:    "foo",
-  password:    "bar",
-  client_id:   "client_id",
+  api_version:  "36.0",
+  username:     "foo",
+  password:     "bar",
+  client_id:    "client_id",
   client_secret: "client_secret",
+)
+```
+
+#### Authentication retries
+
+When an API call returns a 401 Unauthorized, the client automatically
+re-authenticates and retries the request. The default retry count is 3:
+
+```crystal
+client = Crystalforce.new(
+  authentication_retries: 5,
+  # ... auth params
+)
+```
+
+#### Authentication callback
+
+You can provide a callback that is invoked after each successful authentication
+(including re-authentications on 401):
+
+```crystal
+callback = Proc(Crystalforce::Client, Nil).new do |client|
+  puts "Authenticated! Token: #{client.access_token}"
+end
+
+client = Crystalforce.new(
+  authentication_callback: callback,
+  # ... auth params
 )
 ```
 
@@ -106,6 +160,12 @@ accounts = client.query_all("select Id, Something__c from Account where isDelete
 ```
 
 `query_all` allows you to include results from your query that Salesforce hides in the default `query` method. These include soft-deleted records and archived records (e.g. Task and Event records which are usually archived automatically after they are a year old).
+
+### search
+
+```crystal
+results = client.search("FIND {Foobar Inc.}")
+```
 
 ### create
 
