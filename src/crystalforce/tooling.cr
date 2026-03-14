@@ -10,25 +10,36 @@ module Crystalforce
       client_secret : String? = nil,
       refresh_token : String? = nil,
       jwt_key : String? = nil,
-      host : String = "login.salesforce.com",
-      api_version : String = "34.0",
+      host : String? = nil,
+      api_version : String? = nil,
       authentication_retries : Int32 = 3,
-      authentication_callback : Proc(ToolingClient, Nil)? = nil
+      authentication_callback : Proc(ToolingClient, Nil)? = nil,
+      compress : Bool = false,
+      proxy_uri : String? = nil,
+      ssl : OpenSSL::SSL::Context::Client? = nil,
+      request_headers : Hash(String, String)? = nil,
+      cache : Cache? = nil
     )
-      @api_version = api_version
-      @access_token = ""
-      @instance_url = ""
-      @authentication_retries = authentication_retries
-      @authentication_callback = authentication_callback
+      @username = username || Crystalforce.env_username
+      @password = password || Crystalforce.env_password
+      @security_token = security_token || Crystalforce.env_security_token
+      @client_id = client_id || Crystalforce.env_client_id
+      @client_secret = client_secret || Crystalforce.env_client_secret
+      @host = host || Crystalforce.env_host || "login.salesforce.com"
+      @api_version = api_version || Crystalforce.env_api_version || "34.0"
+      @proxy_uri = proxy_uri || Crystalforce.env_proxy_uri
 
-      @username = username
-      @password = password
-      @security_token = security_token
-      @client_id = client_id
-      @client_secret = client_secret
       @refresh_token = refresh_token
       @jwt_key = jwt_key
-      @host = host
+      @authentication_retries = authentication_retries
+      @authentication_callback = authentication_callback
+      @compress = compress
+      @ssl = ssl
+      @request_headers = request_headers
+      @cache = cache
+
+      @access_token = ""
+      @instance_url = ""
 
       perform_authentication
     end
@@ -37,6 +48,7 @@ module Crystalforce
     getter instance_url : String
 
     protected def perform_authentication
+      Crystalforce::Log.info { "Authenticating Tooling client with #{@host}" }
       response = Crystalforce::Authentication.authenticate(
         username: @username,
         password: @password,
@@ -76,7 +88,6 @@ module Crystalforce
       end
     end
 
-    # Override api_path to use tooling endpoint
     private def api_path
       "#{@instance_url}/services/data/v#{@api_version}/tooling"
     end
@@ -90,10 +101,15 @@ module Crystalforce
     client_secret : String? = nil,
     refresh_token : String? = nil,
     jwt_key : String? = nil,
-    host : String = "login.salesforce.com",
-    api_version : String = "34.0",
+    host : String? = nil,
+    api_version : String? = nil,
     authentication_retries : Int32 = 3,
-    authentication_callback : Proc(ToolingClient, Nil)? = nil
+    authentication_callback : Proc(ToolingClient, Nil)? = nil,
+    compress : Bool = false,
+    proxy_uri : String? = nil,
+    ssl : OpenSSL::SSL::Context::Client? = nil,
+    request_headers : Hash(String, String)? = nil,
+    cache : Cache? = nil
   )
     ToolingClient.new(
       username: username,
@@ -107,6 +123,11 @@ module Crystalforce
       api_version: api_version,
       authentication_retries: authentication_retries,
       authentication_callback: authentication_callback,
+      compress: compress,
+      proxy_uri: proxy_uri,
+      ssl: ssl,
+      request_headers: request_headers,
+      cache: cache,
     )
   end
 end
