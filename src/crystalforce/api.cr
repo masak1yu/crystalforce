@@ -114,7 +114,7 @@ module Crystalforce
 
     def find(sobject : String, id : String, field : String? = nil)
       path = if field
-               "/sobjects/#{sobject}/#{field}/#{URI.encode_path(id)}"
+               "/sobjects/#{sobject}/#{field}/#{URI.encode_www_form(id)}"
              else
                "/sobjects/#{sobject}/#{id}"
              end
@@ -125,7 +125,7 @@ module Crystalforce
 
     def select(sobject : String, id : String, select_fields : Array(String), field : String? = nil)
       path = if field
-               "/sobjects/#{sobject}/#{field}/#{URI.encode_path(id)}"
+               "/sobjects/#{sobject}/#{field}/#{URI.encode_www_form(id)}"
              else
                "/sobjects/#{sobject}/#{id}"
              end
@@ -158,7 +158,7 @@ module Crystalforce
       external_id = attrs.fetch(attrs.keys.find { |k| k.to_s.downcase == field.to_s.downcase }, nil)
       attrs_without_field = attrs.reject { |k, v| k.to_s.downcase == field.to_s.downcase }
       response = api_patch(
-        "/sobjects/#{sobject}/#{field}/#{URI.encode_path(external_id.not_nil!.to_s)}",
+        "/sobjects/#{sobject}/#{field}/#{URI.encode_www_form(external_id.not_nil!.to_s)}",
         attrs_without_field
       )
       if response.body.empty?
@@ -173,7 +173,7 @@ module Crystalforce
       external_id = attrs.fetch(attrs.keys.find { |k| k.to_s.downcase == field.to_s.downcase }, nil)
       attrs_without_field = attrs.reject { |k, v| k.to_s.downcase == field.to_s.downcase }
       response = api_patch(
-        "/sobjects/#{sobject}/#{field}/#{URI.encode_path(external_id.not_nil!.to_s)}",
+        "/sobjects/#{sobject}/#{field}/#{URI.encode_www_form(external_id.not_nil!.to_s)}",
         attrs_without_field
       )
       raise_on_error(response)
@@ -531,7 +531,7 @@ module Crystalforce
       attrs_without_field = attrs.reject { |k, v| k.to_s.downcase == field.to_s.downcase }
       @requests << JSON.parse({
         "method"    => "PATCH",
-        "url"       => "v#{@api_version}/sobjects/#{sobject}/#{field}/#{URI.encode_path(external_id.not_nil!.to_s)}",
+        "url"       => "v#{@api_version}/sobjects/#{sobject}/#{field}/#{URI.encode_www_form(external_id.not_nil!.to_s)}",
         "richInput" => attrs_without_field,
       }.to_json)
     end
@@ -586,7 +586,7 @@ module Crystalforce
       attrs_without_field = attrs.reject { |k, v| k.to_s.downcase == field.to_s.downcase }
       @requests << JSON.parse({
         "method"      => "PATCH",
-        "url"         => "/services/data/v#{@api_version}/sobjects/#{sobject}/#{field}/#{URI.encode_path(external_id.not_nil!.to_s)}",
+        "url"         => "/services/data/v#{@api_version}/sobjects/#{sobject}/#{field}/#{URI.encode_www_form(external_id.not_nil!.to_s)}",
         "referenceId" => reference_id,
         "body"        => attrs_without_field,
       }.to_json)
