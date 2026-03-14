@@ -1,5 +1,5 @@
 name: crystalforce
-version: 0.3.0
+version: 0.3.1
 
 authors:
   - masak1yu <antilogic@outlook.com>
@@ -9,5 +9,9 @@ crystal: ">= 1.0.0"
 targets:
   crystalforce:
     main: src/crystalforce.cr
+
+development_dependencies:
+  webmock:
+    github: manastech/webmock.cr
 
 license: MIT

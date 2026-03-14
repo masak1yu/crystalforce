@@ -1,0 +1,13 @@
+{
+  "hasErrors": false,
+  "results": [
+    {
+      "statusCode": 201,
+      "result": {"id": "001xx000003DGbYAAW", "success": true, "errors": []}
+    },
+    {
+      "statusCode": 204,
+      "result": null
+    }
+  ]
+}

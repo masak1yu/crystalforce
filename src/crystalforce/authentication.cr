@@ -25,16 +25,17 @@ module Crystalforce
       client_secret : String? = nil,
       refresh_token : String? = nil,
       jwt_key : String? = nil,
-      host : String = "login.salesforce.com"
+      host : String? = nil,
     )
+      actual_host = host || "login.salesforce.com"
       if jwt_key && client_id && username
-        authenticate_jwt(jwt_key, client_id, username, host)
+        authenticate_jwt(jwt_key, client_id, username, actual_host)
       elsif client_id && client_secret && !username && !refresh_token && !jwt_key
-        authenticate_client_credentials(client_id, client_secret, host)
+        authenticate_client_credentials(client_id, client_secret, actual_host)
       elsif username && password && client_id && client_secret
-        authenticate_password(username, password, security_token, client_id, client_secret, host)
+        authenticate_password(username, password, security_token, client_id, client_secret, actual_host)
       elsif refresh_token && client_id && client_secret
-        authenticate_refresh_token(refresh_token, client_id, client_secret, host)
+        authenticate_refresh_token(refresh_token, client_id, client_secret, actual_host)
       end
     end
 

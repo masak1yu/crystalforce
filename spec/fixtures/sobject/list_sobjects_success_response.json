@@ -1,0 +1,10 @@
+{
+  "encoding": "UTF-8",
+  "maxBatchSize": 200,
+  "sobjects": [{
+    "name": "Account",
+    "label": "Account",
+    "custom": false,
+    "keyPrefix": "001"
+  }]
+}
