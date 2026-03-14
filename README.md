@@ -111,10 +111,10 @@ You can change the `api_version` on a per-client basis:
 
 ```crystal
 client = Crystalforce.new(
-  api_version:  "36.0",
-  username:     "foo",
-  password:     "bar",
-  client_id:    "client_id",
+  api_version:   "58.0",
+  username:      "foo",
+  password:      "bar",
+  client_id:     "client_id",
   client_secret: "client_secret",
 )
 ```
@@ -147,7 +147,7 @@ client = Crystalforce.new(
 )
 ```
 
-### query
+### Query
 
 ```crystal
 accounts = client.query("select Id, Something__c from Account where Id = 'someid'")
@@ -165,6 +165,27 @@ accounts = client.query_all("select Id, Something__c from Account where isDelete
 
 ```crystal
 results = client.search("FIND {Foobar Inc.}")
+```
+
+### explain
+
+```crystal
+plan = client.explain("select Id from Account")
+```
+
+### find
+
+```crystal
+account = client.find("Account", "0016000000MRatd")
+
+# Find by external ID
+account = client.find("Account", "12345", "External__c")
+```
+
+### select
+
+```crystal
+account = client.select("Account", "0016000000MRatd", ["Id", "Name", "Industry"])
 ```
 
 ### create
@@ -189,6 +210,143 @@ client.upsert("Account", "External__c", {"External__c" => "12", "Name" => "Fooba
 
 ```crystal
 client.destroy("Account", "0016000000MRatd")
+```
+
+### describe
+
+```crystal
+# Describe all SObjects
+all = client.describe
+
+# Describe a specific SObject
+account_desc = client.describe("Account")
+```
+
+### describe_layouts
+
+```crystal
+layouts = client.describe_layouts("Account")
+```
+
+### list_sobjects
+
+```crystal
+names = client.list_sobjects
+```
+
+### limits
+
+```crystal
+limits = client.limits
+```
+
+### user_info
+
+```crystal
+info = client.user_info
+```
+
+### org_id
+
+```crystal
+id = client.org_id
+```
+
+### get_updated / get_deleted
+
+```crystal
+updated = client.get_updated("Account", Time.utc - 1.day, Time.utc)
+deleted = client.get_deleted("Account", Time.utc - 1.day, Time.utc)
+```
+
+### recent
+
+```crystal
+items = client.recent(10)
+```
+
+### picklist_values
+
+```crystal
+values = client.picklist_values("Account", "Industry")
+
+# Dependent picklist (filtered by controlling field value)
+values = client.picklist_values("MyObject__c", "SubType__c", valid_for: "TypeA")
+```
+
+### Batch API
+
+Execute up to 25 subrequests in a single call. Automatically chunks larger batches:
+
+```crystal
+results = client.batch do |b|
+  b.create("Account", {:Name => "Batch1"})
+  b.create("Account", {:Name => "Batch2"})
+  b.update("Account", "001xx...", {:Name => "Updated"})
+  b.destroy("Account", "001xx...")
+end
+```
+
+### Composite API
+
+Execute multiple dependent requests in a single call with reference IDs:
+
+```crystal
+results = client.composite do |c|
+  c.create("Account", "newAccount", {:Name => "Composite1"})
+  c.find("Account", "findAccount", "001xx...")
+  c.update("Account", "updateAccount", "001xx...", {:Name => "Updated"})
+  c.destroy("Account", "deleteAccount", "001xx...")
+end
+```
+
+### Low-level HTTP
+
+```crystal
+response = client.api_get("/sobjects/Account/describe")
+response = client.api_post("/sobjects/Account", {:Name => "Test"})
+response = client.api_patch("/sobjects/Account/001xx...", {:Name => "Updated"})
+response = client.api_put("/some/path", {:key => "value"})
+response = client.api_delete("/sobjects/Account/001xx...")
+```
+
+### Tooling API
+
+```crystal
+tooling = Crystalforce.tooling(
+  username:  "foo",
+  client_id: "client_id",
+  jwt_key:   jwt_key,
+)
+
+classes = tooling.query("SELECT Id, Name FROM ApexClass LIMIT 10")
+desc = tooling.describe("ApexClass")
+```
+
+### Canvas
+
+Decode and verify a Force.com Canvas signed request:
+
+```crystal
+result = Crystalforce::Canvas.decode_signed_request(signed_request, client_secret)
+```
+
+### Streaming API
+
+Subscribe to PushTopics or Platform Events via CometD long-polling:
+
+```crystal
+streaming = client.streaming
+
+# Subscribe to a PushTopic
+streaming.subscribe("/topic/MyTopic") do |message|
+  puts message
+end
+
+# Subscribe with replay
+streaming.subscribe("/event/MyEvent__e", replay_id: -2_i64) do |message|
+  puts message
+end
 ```
 
 ## Contributing
