@@ -317,7 +317,7 @@ module Crystalforce
     # Batch API
 
     def batch(halt_on_error : Bool = false, &)
-      subrequests = BatchSubrequests.new(@api_version)
+      subrequests = BatchSubrequests.new(@api_version || "34.0")
       yield subrequests
       results = [] of JSON::Any
       subrequests.each_chunk(25) do |chunk|
@@ -339,7 +339,7 @@ module Crystalforce
     # Composite API
 
     def composite(all_or_none : Bool = false, collate_subrequests : Bool = false, &)
-      subrequests = CompositeSubrequests.new(@api_version)
+      subrequests = CompositeSubrequests.new(@api_version || "34.0")
       yield subrequests
       body = {
         "allOrNone"          => all_or_none,
