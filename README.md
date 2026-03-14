@@ -1,5 +1,7 @@
 # crystalforce
 
+[![CI](https://github.com/masak1yu/crystalforce/actions/workflows/ci.yml/badge.svg)](https://github.com/masak1yu/crystalforce/actions/workflows/ci.yml)
+
 Crystalforce is a Crystal shard for the Salesforce REST API.
 A Crystal port of [Restforce](https://github.com/restforce/restforce).
 
@@ -31,6 +33,12 @@ shards build
 
 ```sh
 crystal spec
+```
+
+### Check formatting
+
+```sh
+crystal tool format --check
 ```
 
 ## Usage

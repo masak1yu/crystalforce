@@ -1,0 +1,9 @@
+{
+  "sub": "https://login.salesforce.com/id/00Dx0000000BV7z/005x00000012Q9P",
+  "user_id": "005x00000012Q9P",
+  "organization_id": "00Dx0000000BV7z",
+  "preferred_username": "user@example.com",
+  "nickname": "user",
+  "name": "Test User",
+  "email": "user@example.com"
+}

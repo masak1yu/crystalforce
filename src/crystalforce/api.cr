@@ -474,13 +474,13 @@ module Crystalforce
     private def raise_on_error(response)
       return if response.status_code >= 200 && response.status_code < 300
       body = JSON.parse(response.body) rescue nil
-      message = if body && body[0]?
-                   body[0]["message"]?.try(&.as_s) || "Salesforce API error"
-                 elsif body && body["error_description"]?
-                   body["error_description"].as_s
-                 else
-                   "Salesforce API error (#{response.status_code})"
-                 end
+      message = if body && body[0]? && body[0].as_h?
+                  body[0]["message"]?.try(&.as_s) || "Salesforce API error"
+                elsif body && body.as_h? && body["error_description"]?
+                  body["error_description"].as_s
+                else
+                  "Salesforce API error (#{response.status_code})"
+                end
       Crystalforce::Log.error { "API error #{response.status_code}: #{message}" }
       case response.status_code
       when 300

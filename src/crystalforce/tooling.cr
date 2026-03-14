@@ -18,7 +18,7 @@ module Crystalforce
       proxy_uri : String? = nil,
       ssl : OpenSSL::SSL::Context::Client? = nil,
       request_headers : Hash(String, String)? = nil,
-      cache : Cache? = nil
+      cache : Cache? = nil,
     )
       @username = username || Crystalforce.env_username
       @password = password || Crystalforce.env_password
@@ -109,7 +109,7 @@ module Crystalforce
     proxy_uri : String? = nil,
     ssl : OpenSSL::SSL::Context::Client? = nil,
     request_headers : Hash(String, String)? = nil,
-    cache : Cache? = nil
+    cache : Cache? = nil,
   )
     ToolingClient.new(
       username: username,

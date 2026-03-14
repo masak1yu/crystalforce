@@ -6,7 +6,7 @@ module Crystalforce
     def initialize(
       @instance_url : String,
       @access_token : String,
-      @api_version : String = "58.0"
+      @api_version : String = "58.0",
     )
       @client_id = ""
       @running = false

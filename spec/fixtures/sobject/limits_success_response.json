@@ -1,0 +1,10 @@
+{
+  "DailyApiRequests": {
+    "Max": 15000,
+    "Remaining": 14998
+  },
+  "DailyBulkApiRequests": {
+    "Max": 5000,
+    "Remaining": 5000
+  }
+}

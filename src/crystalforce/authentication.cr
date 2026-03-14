@@ -25,7 +25,7 @@ module Crystalforce
       client_secret : String? = nil,
       refresh_token : String? = nil,
       jwt_key : String? = nil,
-      host : String = "login.salesforce.com"
+      host : String = "login.salesforce.com",
     )
       if jwt_key && client_id && username
         authenticate_jwt(jwt_key, client_id, username, host)
