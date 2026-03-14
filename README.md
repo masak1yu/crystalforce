@@ -147,10 +147,109 @@ client = Crystalforce.new(
 )
 ```
 
+#### Environment variables
+
+Configuration can be provided via environment variables. Explicit parameters
+take precedence over environment variables:
+
+| Variable | Config key |
+|----------|-----------|
+| `SALESFORCE_USERNAME` | `username` |
+| `SALESFORCE_PASSWORD` | `password` |
+| `SALESFORCE_SECURITY_TOKEN` | `security_token` |
+| `SALESFORCE_CLIENT_ID` | `client_id` |
+| `SALESFORCE_CLIENT_SECRET` | `client_secret` |
+| `SALESFORCE_HOST` | `host` |
+| `SALESFORCE_API_VERSION` | `api_version` |
+| `SALESFORCE_PROXY_URI` | `proxy_uri` |
+
+```crystal
+# Uses SALESFORCE_* environment variables as defaults
+client = Crystalforce.new
+```
+
+#### Custom headers
+
+Add custom headers to all requests:
+
+```crystal
+client = Crystalforce.new(
+  request_headers: {"X-Custom-Header" => "value"},
+  # ... auth params
+)
+```
+
+#### Logging
+
+Crystalforce uses Crystal's standard `Log` module under the `crystalforce` source.
+Configure the log level to see request/response details:
+
+```crystal
+Log.setup("crystalforce", :debug)
+```
+
+#### GZIP compression
+
+Enable GZIP compression for requests and responses:
+
+```crystal
+client = Crystalforce.new(
+  compress: true,
+  # ... auth params
+)
+```
+
+#### SSL configuration
+
+Provide a custom SSL context:
+
+```crystal
+ssl = OpenSSL::SSL::Context::Client.new
+client = Crystalforce.new(
+  ssl: ssl,
+  # ... auth params
+)
+```
+
+#### Proxy
+
+Route requests through an HTTP proxy:
+
+```crystal
+client = Crystalforce.new(
+  proxy_uri: "http://proxy.example.com:8080",
+  # ... auth params
+)
+```
+
+#### Caching
+
+Cache GET request responses using the built-in `MemoryCache` or a custom
+implementation of the `Crystalforce::Cache` module:
+
+```crystal
+cache = Crystalforce::MemoryCache.new
+client = Crystalforce.new(
+  cache: cache,
+  # ... auth params
+)
+```
+
 ### Query
 
 ```crystal
 accounts = client.query("select Id, Something__c from Account where Id = 'someid'")
+```
+
+#### Automatic pagination
+
+Use `query_with_pagination` to get a `Collection` that automatically fetches
+subsequent pages as you iterate:
+
+```crystal
+collection = client.query_with_pagination("SELECT Id, Name FROM Account")
+puts collection.total_size
+collection.each { |record| puts record["Name"] }
 ```
 
 ### query_all
@@ -192,24 +291,37 @@ account = client.select("Account", "0016000000MRatd", ["Id", "Name", "Industry"]
 
 ```crystal
 client.create("Account", {:Name => "Foobar Inc."})
+
+# Bang version raises on error and returns parsed response
+result = client.create!("Account", {:Name => "Foobar Inc."})
+puts result["id"]
 ```
 
 ### update
 
 ```crystal
 client.update("Account", "0016000000MRatd", {:Name => "Whizbang Corp"})
+
+# Bang version raises on error
+client.update!("Account", "0016000000MRatd", {:Name => "Whizbang Corp"})
 ```
 
 ### upsert
 
 ```crystal
 client.upsert("Account", "External__c", {"External__c" => "12", "Name" => "Foobar"})
+
+# Bang version raises on error
+client.upsert!("Account", "External__c", {"External__c" => "12", "Name" => "Foobar"})
 ```
 
 ### destroy
 
 ```crystal
 client.destroy("Account", "0016000000MRatd")
+
+# Bang version raises on error
+client.destroy!("Account", "0016000000MRatd")
 ```
 
 ### describe

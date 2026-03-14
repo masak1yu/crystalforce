@@ -7,5 +7,7 @@ module Crystalforce
 
   class UnauthorizedError < Error; end
 
+  class NotFoundError < Error; end
+
   class APIVersionError < Error; end
 end
