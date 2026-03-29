@@ -127,7 +127,7 @@ describe Crystalforce::Authentication do
         WebMock.stub(:post, "https://login.salesforce.com/services/oauth2/token")
           .to_return(status: 200, body: auth_success_body)
 
-        jwt_key = File.read(File.join(FIXTURE_PATH, "test_private.key"))
+        jwt_key = generate_test_rsa_key
         response = Crystalforce::Authentication.authenticate(
           jwt_key: jwt_key,
           client_id: "client_id",
@@ -146,7 +146,7 @@ describe Crystalforce::Authentication do
             HTTP::Client::Response.new(200, body: auth_success_body)
           end
 
-        jwt_key = File.read(File.join(FIXTURE_PATH, "test_private.key"))
+        jwt_key = generate_test_rsa_key
         Crystalforce::Authentication.authenticate(
           jwt_key: jwt_key,
           client_id: "client_id",
@@ -203,7 +203,7 @@ describe Crystalforce::Authentication do
             HTTP::Client::Response.new(200, body: auth_success_body)
           end
 
-        jwt_key = File.read(File.join(FIXTURE_PATH, "test_private.key"))
+        jwt_key = generate_test_rsa_key
         Crystalforce::Authentication.authenticate(
           jwt_key: jwt_key,
           client_id: "client_id",

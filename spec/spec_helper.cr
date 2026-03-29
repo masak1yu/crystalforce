@@ -12,6 +12,31 @@ def fixture(filename : String) : String
   File.read(File.join(FIXTURE_PATH, "#{filename}.json"))
 end
 
+lib LibCrypto
+  fun RSA_generate_key_ex(rsa : Void*, bits : Int32, e : Void*, cb : Void*) : Int32
+  fun RSA_new : Void*
+  fun BN_new : Void*
+  fun BN_set_word(a : Void*, w : UInt64) : Int32
+  fun PEM_write_bio_RSAPrivateKey(bp : Bio*, x : Void*, enc : Void*, kstr : Void*, klen : Int32, cb : Void*, u : Void*) : Int32
+  fun BIO_ctrl_pending(b : Bio*) : LibC::SizeT
+  fun BIO_read(b : Bio*, data : UInt8*, dlen : Int32) : Int32
+  fun BIO_s_mem : BioMethod*
+end
+
+def generate_test_rsa_key : String
+  rsa = LibCrypto.RSA_new
+  e = LibCrypto.BN_new
+  LibCrypto.BN_set_word(e, 65537_u64)
+  LibCrypto.RSA_generate_key_ex(rsa, 2048, e, nil)
+
+  bio = LibCrypto.BIO_new(LibCrypto.BIO_s_mem)
+  LibCrypto.PEM_write_bio_RSAPrivateKey(bio, rsa, nil, nil, 0, nil, nil)
+  len = LibCrypto.BIO_ctrl_pending(bio)
+  buf = Bytes.new(len)
+  LibCrypto.BIO_read(bio, buf, len.to_i32)
+  String.new(buf)
+end
+
 def auth_success_body
   fixture("auth_success_response")
 end
